@@ -1814,7 +1814,7 @@ dependencies = [
 
 [[package]]
 name = "json2excel-gui"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "rust_xlsxwriter",
  "serde",
