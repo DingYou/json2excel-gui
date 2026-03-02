@@ -62,7 +62,20 @@ jobs:
         with:
           tagName: v__VERSION__
           releaseName: 'json2excel-gui v__VERSION__'
-          releaseBody: '跨平台版本构建完成。请根据你的操作系统下载对应的安装包：\n- macOS (M系列芯片): .dmg (aarch64)\n- macOS (Intel芯片): .dmg (x86_64)\n- Windows: .msi 或 .exe\n- Linux: .AppImage 或 .deb'
+          releaseBody: |
+            ### 📥 下载指南
+            请根据您的电脑系统选择对应的安装文件：
+
+            | 操作系统 | 文件后缀 | 架构说明 |
+            | :--- | :--- | :--- |
+            | **macOS (M1/M2/M3)** | `.dmg (aarch64)` | 苹果M系列芯片专用 |
+            | **macOS (Intel)** | `.dmg (x64)` | 旧款苹果电脑专用 |
+            | **Windows** | `.msi` 或 `.exe` | Windows 10/11 选其一即可 |
+            | **Linux (Ubuntu/Debian)** | `.deb` | 双击安装 |
+            | **Linux (通用)** | `.AppImage` | 免安装，直接运行 |
+
+            > [!TIP]
+            > 如果您不确定自己的系统架构，macOS 用户建议优先查看“关于本机”。Windows 用户下载 `.msi` 通常是最佳实践。
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
