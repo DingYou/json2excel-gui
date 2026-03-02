@@ -1,0 +1,72 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 经典翠绿渐变背景 -->
+    <linearGradient id="bg-gradient" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22c55e"/>
+      <stop offset="1" stop-color="#047857"/>
+    </linearGradient>
+
+    <!-- 简单的边缘反光高光 -->
+    <linearGradient id="stroke-grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <!-- 玻璃光泽，自右上向下散落 -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <!-- 图标主体的阴影 -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.2"/>
+    </filter>
+
+    <!-- macOS 原生底层应用阴影 -->
+    <filter id="mac-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#000000" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- 将整体内容缩小 80% (约 410px)，以便留出操作系统的投影空间 -->
+  <!-- 左上角偏移量: (512 - (512 * 0.8)) / 2 = 51.2，取整为 51 -->
+  <g transform="translate(51, 51) scale(0.8)">
+    <!-- 绿底原角矩形 + macOS 大阴影 -->
+    <rect width="512" height="512" rx="114" fill="url(#bg-gradient)" filter="url(#mac-shadow)"/>
+    
+    <!-- 微弱内部高光描边 (模拟光泽边缘) -->
+    <rect x="2" y="2" width="508" height="508" rx="112" stroke="url(#stroke-grad)" stroke-width="4"/>
+
+    <!-- 半透明玻璃质感的底托 -->
+    <rect x="100" y="110" width="312" height="292" rx="32" fill="url(#glassGrad)" filter="url(#shadow)"/>
+    <!-- 玻璃边框反光 -->
+    <rect x="100" y="110" width="312" height="292" rx="32" stroke="url(#stroke-grad)" stroke-width="2"/>
+
+    <!-- Excel 表格深色底 -->
+    <path d="M128 171C128 152.8 142.8 138 161 138H351C369.2 138 384 152.8 384 171V341C384 359.2 369.2 374 351 374H161C142.8 374 128 359.2 128 341V171Z" fill="#1e293b" fill-opacity="0.95"/>
+    
+    <!-- 顶部表头行 (更亮的绿色以形成对比) -->
+    <path d="M128 171C128 152.8 142.8 138 161 138H351C369.2 138 384 152.8 384 171V196H128V171Z" fill="#10b981"/>
+    
+    <!-- 表格数据行 (白色点缀) -->
+    <rect x="156" y="220" width="80" height="24" rx="4" fill="#ffffff" fill-opacity="0.8"/>
+    <rect x="246" y="220" width="114" height="24" rx="4" fill="#ffffff" fill-opacity="0.8"/>
+    
+    <rect x="156" y="260" width="80" height="24" rx="4" fill="#ffffff" fill-opacity="0.8"/>
+    <rect x="246" y="260" width="114" height="24" rx="4" fill="#ffffff" fill-opacity="0.8"/>
+    
+    <rect x="156" y="300" width="80" height="24" rx="4" fill="#ffffff" fill-opacity="0.8"/>
+    <rect x="246" y="300" width="114" height="24" rx="4" fill="#ffffff" fill-opacity="0.8"/>
+
+    <!-- 前景叠加一个圆形的徽章 (维持对比紫色)，写有 {} 表示 JSON -->
+    <circle cx="360" cy="360" r="80" fill="#6366f1" filter="url(#shadow)"/>
+    <!-- 紫色徽章玻璃光泽 -->
+    <circle cx="360" cy="360" r="80" fill="url(#glassGrad)"/>
+    <circle cx="360" cy="360" r="80" fill="transparent" stroke="url(#stroke-grad)" stroke-width="2"/>
+    
+    <path d="M344 330C344 322 336 322 336 322C324 322 320 328 320 338V348C320 354 316 358 310 360C316 362 320 366 320 372V382C320 392 324 398 336 398C336 398 344 398 344 390" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M376 330C376 322 384 322 384 322C396 322 400 328 400 338V348C400 354 404 358 410 360C404 362 400 366 400 372V382C400 392 396 398 384 398C384 398 376 398 376 390" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+</svg>

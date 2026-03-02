@@ -1,0 +1,14 @@
+{
+    "name": "json2excel-gui",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "tauri": "tauri"
+    },
+    "devDependencies": {
+        "@tauri-apps/cli": "^2.1.0"
+    },
+    "dependencies": {
+        "@tauri-apps/api": "^2.10.1"
+    }
+}

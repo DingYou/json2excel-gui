@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title">JSON to Excel 转换工具</title>
+  <script type="module" src="/main.js" defer></script>
+</head>
+
+<body>
+  <!-- 自定义 macOS 拖拽标题栏 -->
+  <div data-tauri-drag-region class="titlebar"></div>
+
+  <!-- 液化动态背景 -->
+  <div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <main class="container">
+    <div class="card" style="position:relative;">
+      <!-- 按钮容器: 主题与多语言 -->
+      <div class="top-controls">
+        <button type="button" id="btn-lang" class="control-btn" data-tooltip="切换语言 / Switch Language">
+          <svg class="icon-lang" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span class="lang-text">EN</span>
+        </button>
+
+        <button type="button" id="btn-theme" class="control-btn" data-tooltip="跟随系统" data-i18n-tooltip="themeAuto">
+          <!-- 月亮图标 (深色模式) -->
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+          <!-- 太阳图标 (浅色模式) -->
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <!-- 自动图标 (跟随系统) -->
+          <svg class="icon-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3a9 9 0 0 1 0 18" fill="currentColor" opacity="0.3" />
+            <line x1="12" y1="7" x2="12" y2="12" />
+            <line x1="12" y1="12" x2="15" y2="14" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="header">
+        <div class="icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+            <polyline points="10 9 9 9 8 9" />
+          </svg>
+        </div>
+        <h1>JSON → Excel</h1>
+        <p class="subtitle" data-i18n="subtitle">多种方式导入 JSON，一键转换为 Excel</p>
+      </div>
+
+      <!-- 输入源 Tab 切换 -->
+      <div class="input-source">
+        <div class="input-tabs">
+          <button type="button" class="input-tab active" data-tab="file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+            </svg>
+            <span data-i18n="tabFile">文件</span>
+          </button>
+          <button type="button" class="input-tab" data-tab="curl">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+            </svg>
+            Curl / Fetch
+          </button>
+          <button type="button" class="input-tab" data-tab="json">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+            JSON
+          </button>
+        </div>
+
+        <!-- Tab: 文件 -->
+        <div class="tab-panel active" id="panel-file">
+          <div class="file-input-row">
+            <input type="text" id="input-path" placeholder="选择或输入 JSON 文件路径..."
+              data-i18n-placeholder="inputPlaceholder" />
+            <button type="button" id="btn-select-input" class="btn-secondary" data-i18n="browse">浏览</button>
+          </div>
+        </div>
+
+        <!-- Tab: Curl/Fetch -->
+        <div class="tab-panel" id="panel-curl">
+          <textarea id="curl-input" class="code-textarea"
+            placeholder="粘贴 curl 或 fetch 命令...&#10;&#10;示例:&#10;curl -X GET 'https://api.example.com/data' \&#10;  -H 'Authorization: Bearer token'&#10;&#10;或 fetch 格式:&#10;fetch('https://api.example.com/data', {&#10;  headers: { 'Authorization': 'Bearer token' }&#10;})"
+            data-i18n-placeholder="curlPlaceholder" spellcheck="false"></textarea>
+          <button type="button" id="btn-exec-curl" class="btn-secondary btn-exec">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span data-i18n="execute">执行请求</span>
+          </button>
+        </div>
+
+        <!-- Tab: JSON -->
+        <div class="tab-panel" id="panel-json">
+          <textarea id="json-input" class="code-textarea"
+            placeholder="直接粘贴 JSON 内容...&#10;&#10;支持数组或对象结构:&#10;[&#10;  { &quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30 },&#10;  { &quot;name&quot;: &quot;Bob&quot;, &quot;age&quot;: 25 }&#10;]"
+            data-i18n-placeholder="jsonPlaceholder" spellcheck="false"></textarea>
+          <button type="button" id="btn-parse-json" class="btn-secondary btn-exec">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            <span data-i18n="parseJson">解析 JSON</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 原生字段选择面板 -->
+      <div id="field-selector" class="field-selector" style="display:none;">
+        <p class="field-selector-title"><span data-i18n="fieldSelectTitle">📋 发现多个数组结构，请选择要导出为 Sheet 的字段：</span></p>
+        <div id="field-list" class="field-list"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="output-path" data-i18n="outputLabel">输出文件</label>
+        <div class="file-input-row">
+          <input type="text" id="output-path" placeholder="选择或输入保存位置..." data-i18n-placeholder="outputPlaceholder" />
+          <button type="button" id="btn-select-output" class="btn-secondary" data-i18n="browse">浏览</button>
+        </div>
+      </div>
+
+      <button type="button" id="btn-convert" class="btn-primary" disabled>
+        <span class="btn-text" data-i18n="startConvert">开始转换</span>
+        <span class="btn-loading" style="display:none;">
+          <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <path
+              d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+          </svg>
+          <span data-i18n="converting">转换中...</span>
+        </span>
+      </button>
+
+      <div id="status-msg" class="status-msg" style="display:none;"></div>
+      <button type="button" id="btn-reveal" class="btn-secondary" style="display:none; margin-top: 12px; width: 100%;"
+        data-i18n="revealInExplorer">在文件夹中显示</button>
+    </div>
+  </main>
+</body>
+
+</html>

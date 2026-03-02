@@ -1,0 +1,29 @@
+[package]
+name = "json2excel-gui"
+version = "0.1.0"
+description = "JSON to Excel 转换工具"
+authors = ["you"]
+edition = "2024"
+
+[lib]
+name = "json2excel_gui_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-window-state = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rust_xlsxwriter = { version = "0.81.0", default-features = false }
+
+[profile.release]
+strip = true      # 剥离调试符号
+lto = true        # 链接时优化
+opt-level = "s"   # 优化体积
+codegen-units = 1 # 更彻底的优化
+panic = "abort"   # 省掉 unwind 代码
