@@ -15,16 +15,16 @@ jobs:
         include:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-            name: 'macOS-ARM'
+            name: 'macOS-aarch64'
           - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
-            name: 'macOS-Intel'
+            name: 'macOS-x86_64'
           - platform: 'ubuntu-22.04'
             args: ''
-            name: 'Linux'
+            name: 'Linux-x86_64'
           - platform: 'windows-latest'
             args: ''
-            name: 'Windows'
+            name: 'Windows-x86_64'
 
     runs-on: ${{ matrix.platform }}
     name: Build (${{ matrix.name }})
