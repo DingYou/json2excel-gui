@@ -13,16 +13,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+          - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
+            name: 'macOS-ARM'
+          - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04' # for Tauri v2 you could replace this with ubuntu-22.04.
+            name: 'macOS-Intel'
+          - platform: 'ubuntu-22.04'
             args: ''
+            name: 'Linux'
           - platform: 'windows-latest'
             args: ''
+            name: 'Windows'
 
     runs-on: ${{ matrix.platform }}
+    name: Build (${{ matrix.name }})
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -34,27 +40,29 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
       - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't make sense for your app in v2.
 
       - name: install frontend dependencies
-        run: npm install # change this to npm, pnpm or yarn depending on which one you use.
+        run: npm install
 
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: json2excel-gui-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
+          tagName: v__VERSION__
           releaseName: 'json2excel-gui v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: '跨平台版本构建完成。请根据你的操作系统下载对应的安装包：\n- macOS (M系列芯片): .dmg (aarch64)\n- macOS (Intel芯片): .dmg (x86_64)\n- Windows: .msi 或 .exe\n- Linux: .AppImage 或 .deb'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
