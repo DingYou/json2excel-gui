@@ -6,76 +6,149 @@ on:
       - 'v*'
 
 jobs:
-  publish-tauri:
+  # 第一步：提前创建 Release 草稿，后续各平台构建完成后上传产物到这里
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create draft release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "json2excel-gui ${{ github.ref_name }}"
+          draft: true
+          prerelease: false
+          body: |
+            ### 📥 下载指南
+
+            请根据您的操作系统选择对应的安装包：
+
+            | 操作系统 | 推荐下载文件 | 说明 |
+            | :--- | :--- | :--- |
+            | **macOS (M1/M2/M3...)** | `*-macOS-aarch64.dmg` | 苹果 M 系列芯片专用 |
+            | **macOS (Intel)** | `*-macOS-x86_64.dmg` | 旧款 Intel 芯片 Mac |
+            | **Windows** | `*-Windows-x86_64-setup.exe` | Windows 10/11，推荐 |
+            | **Windows (MSI)** | `*-Windows-x86_64.msi` | 企业/IT 部署用 |
+            | **Linux (Debian/Ubuntu)** | `*-Linux-x86_64.deb` | 双击安装 |
+            | **Linux (通用)** | `*-Linux-x86_64.AppImage` | 无需安装，赋权直接运行 |
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 第二步：各平台并行构建并上传重命名后的产物
+  build:
+    needs: create-release
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
+          - platform: macos-latest
             args: '--target aarch64-apple-darwin'
-            name: 'macOS-aarch64'
-          - platform: 'macos-latest'
+            name: macOS-aarch64
+          - platform: macos-latest
             args: '--target x86_64-apple-darwin'
-            name: 'macOS-x86_64'
-          - platform: 'ubuntu-22.04'
+            name: macOS-x86_64
+          - platform: ubuntu-22.04
             args: ''
-            name: 'Linux-x86_64'
-          - platform: 'windows-latest'
+            name: Linux-x86_64
+          - platform: windows-latest
             args: ''
-            name: 'Windows-x86_64'
+            name: Windows-x86_64
 
     runs-on: ${{ matrix.platform }}
     name: Build (${{ matrix.name }})
-    
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      - name: install dependencies (ubuntu only)
+      - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: install frontend dependencies
+      - name: Install frontend dependencies
         run: npm install
 
-      - uses: tauri-apps/tauri-action@v0
+      # 只构建，不创建 Release（不传 tagName）
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        with:
+          args: ${{ matrix.args }}
+
+      # ── macOS aarch64 上传 ──
+      - name: Upload (macOS aarch64)
+        if: matrix.name == 'macOS-aarch64'
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          BUNDLE="src-tauri/target/aarch64-apple-darwin/release/bundle"
+          DMG=$(ls $BUNDLE/dmg/*.dmg | head -1)
+          gh release upload "${{ github.ref_name }}" \
+            "$DMG#json2excel-gui-${VERSION}-macOS-aarch64.dmg" --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: 'json2excel-gui v__VERSION__'
-          releaseBody: |
-            ### 📥 下载指南
-            请根据您的电脑系统选择对应的安装文件：
 
-            | 操作系统 | 文件后缀 | 架构说明 |
-            | :--- | :--- | :--- |
-            | **macOS (M1/M2/M3)** | `.dmg (aarch64)` | 苹果M系列芯片专用 |
-            | **macOS (Intel)** | `.dmg (x64)` | 旧款苹果电脑专用 |
-            | **Windows** | `.msi` 或 `.exe` | Windows 10/11 选其一即可 |
-            | **Linux (Ubuntu/Debian)** | `.deb` | 双击安装 |
-            | **Linux (通用)** | `.AppImage` | 免安装，直接运行 |
+      # ── macOS x86_64 上传 ──
+      - name: Upload (macOS x86_64)
+        if: matrix.name == 'macOS-x86_64'
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          BUNDLE="src-tauri/target/x86_64-apple-darwin/release/bundle"
+          DMG=$(ls $BUNDLE/dmg/*.dmg | head -1)
+          gh release upload "${{ github.ref_name }}" \
+            "$DMG#json2excel-gui-${VERSION}-macOS-x86_64.dmg" --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            > [!TIP]
-            > 如果您不确定自己的系统架构，macOS 用户建议优先查看“关于本机”。Windows 用户下载 `.msi` 通常是最佳实践。
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
+      # ── Linux 上传 ──
+      - name: Upload (Linux)
+        if: matrix.name == 'Linux-x86_64'
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          BUNDLE="src-tauri/target/release/bundle"
+          DEB=$(ls $BUNDLE/deb/*.deb | head -1)
+          APPIMAGE=$(ls $BUNDLE/appimage/*.AppImage | head -1)
+          gh release upload "${{ github.ref_name }}" \
+            "$DEB#json2excel-gui-${VERSION}-Linux-x86_64.deb" \
+            "$APPIMAGE#json2excel-gui-${VERSION}-Linux-x86_64.AppImage" \
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Windows 上传 ──
+      - name: Upload (Windows)
+        if: matrix.name == 'Windows-x86_64'
+        shell: pwsh
+        run: |
+          $VERSION = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
+          $BUNDLE = "src-tauri/target/release/bundle"
+          $EXE = (Get-ChildItem "$BUNDLE/nsis/*.exe" | Select-Object -First 1).FullName
+          $MSI = (Get-ChildItem "$BUNDLE/msi/*.msi" | Select-Object -First 1).FullName
+          gh release upload "${{ github.ref_name }}" `
+            "${EXE}#json2excel-gui-${VERSION}-Windows-x86_64-setup.exe" `
+            "${MSI}#json2excel-gui-${VERSION}-Windows-x86_64.msi" `
+            --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
