@@ -16,13 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create draft release
+      - name: Create release
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: "json2excel-gui ${{ github.ref_name }}"
-          draft: true
+          draft: false
           prerelease: false
           body: |
             ### 📥 下载指南
