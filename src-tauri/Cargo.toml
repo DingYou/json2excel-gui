@@ -1,6 +1,6 @@
 [package]
 name = "json2excel-gui"
-version = "1.0.0"
+version = "1.0.1"
 description = "JSON to Excel 转换工具"
 authors = ["you"]
 edition = "2024"
@@ -18,8 +18,15 @@ tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["arbitrary_precision"] }
+tempfile = "3"
+same-file = "1"
+sha2 = "0.10"
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "gzip", "brotli", "deflate"] }
 rust_xlsxwriter = { version = "0.81.0", default-features = false }
+
+[dev-dependencies]
+calamine = { version = "0.35", default-features = false }
 
 [profile.release]
 strip = true      # 剥离调试符号

@@ -746,3 +746,7 @@ button {
 [data-theme="light"] .blob {
   opacity: 0.4;
 }
+/* Initial visibility lives in CSS so the application needs no inline styles. */
+.card { position: relative; }
+#field-selector, .btn-loading, #status-msg, #btn-reveal { display: none; }
+#btn-reveal { margin-top: 12px; width: 100%; }

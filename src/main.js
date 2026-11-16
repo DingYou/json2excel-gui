@@ -6,7 +6,7 @@ const { open, save } = window.__TAURI__.dialog;
 // ============ 多语言管理 ============
 
 const LANG_KEY = "json2excel-lang";
-let currentLang = localStorage.getItem(LANG_KEY) || "zh";
+let currentLang = localStorage.getItem(LANG_KEY) === "en" ? "en" : "zh";
 
 const i18nData = {
   zh: {
@@ -219,11 +219,25 @@ let btnReveal;
 let curlInputEl;
 let jsonInputEl;
 let rawFieldsOptions = []; // 存储从后端拉取的字段信息
+let loadingDepth = 0;
+let inputDebounceTimer;
+
+function invalidateParsedInput() {
+  rawFieldsOptions = [];
+  currentJsonContent = "";
+  hideFieldSelector();
+  document.querySelector("#field-list").replaceChildren();
+  btnReveal.style.display = "none";
+  showStatus("", "none");
+  updateConvertButton();
+}
 
 /**
  * 切换输入 Tab
  */
 function switchTab(tabName) {
+  if (loadingDepth > 0) return;
+  clearTimeout(inputDebounceTimer);
   activeTab = tabName;
 
   // 更新 Tab 按钮状态
@@ -240,6 +254,7 @@ function switchTab(tabName) {
 
   // 切换 Tab 时清除状态
   hideFieldSelector();
+  document.querySelector("#field-list").replaceChildren();
   showStatus("", "none");
   btnReveal.style.display = "none";
   rawFieldsOptions = [];
@@ -262,7 +277,7 @@ async function selectInputFile() {
   if (path) {
     inputPathEl.value = path;
     if (!outputPathEl.value) {
-      outputPathEl.value = path.replace(/\.json$/i, ".xlsx");
+      outputPathEl.value = /\.json$/i.test(path) ? path.replace(/\.json$/i, ".xlsx") : `${path}.xlsx`;
     }
 
     // 载入字段
@@ -276,6 +291,7 @@ async function selectInputFile() {
 async function loadFieldsFromFile(input) {
   setLoading(true, t("errParseFile"));
   hideFieldSelector();
+  document.querySelector("#field-list").replaceChildren();
   showStatus("", "none");
   btnReveal.style.display = "none";
   rawFieldsOptions = [];
@@ -298,6 +314,7 @@ async function loadFieldsFromFile(input) {
 async function loadFieldsFromContent(content) {
   setLoading(true, t("errParseJson"));
   hideFieldSelector();
+  document.querySelector("#field-list").replaceChildren();
   showStatus("", "none");
   btnReveal.style.display = "none";
   rawFieldsOptions = [];
@@ -377,14 +394,7 @@ async function parseJsonInput() {
     return;
   }
 
-  // 尝试格式化 JSON（如果是有效 JSON 的话）
-  try {
-    const parsed = JSON.parse(jsonText);
-    jsonInputEl.value = JSON.stringify(parsed, null, 2);
-  } catch {
-    // 格式化失败不影响后续逻辑，后端会给出更准确的错误
-  }
-
+  // Preserve the original text. JavaScript numbers cannot represent long integer IDs exactly.
   await loadFieldsFromContent(jsonText);
 }
 
@@ -419,16 +429,26 @@ function showFieldSelector(fields) {
   const panel = document.querySelector("#field-selector");
   const list = document.querySelector("#field-list");
 
-  list.innerHTML = "";
+  const previous = new Map(Array.from(list.querySelectorAll("input[type='checkbox']"), cb => [cb.value, cb.checked]));
+  list.replaceChildren();
   fields.forEach((field, index) => {
     const label = document.createElement("label");
     label.className = "field-option";
-    label.innerHTML = `
-      <input type="checkbox" value="${field.path}" checked />
-      <span class="field-num">[${index + 1}]</span>
-      <span class="field-name">${field.path}</span>
-      <span class="field-meta">(${field.count} ${t("items")}${field.is_matrix ? ', ' + t("matrix") : ''})</span>
-    `;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = field.path;
+    checkbox.checked = previous.get(field.path) ?? true;
+    label.appendChild(checkbox);
+    for (const [className, text] of [
+      ["field-num", `[${index + 1}]`],
+      ["field-name", field.path],
+      ["field-meta", `(${field.count} ${t("items")}${field.is_matrix ? ', ' + t("matrix") : ''})`],
+    ]) {
+      const span = document.createElement("span");
+      span.className = className;
+      span.textContent = text;
+      label.appendChild(span);
+    }
     list.appendChild(label);
   });
 
@@ -485,31 +505,23 @@ function updateConvertButton() {
     hasFields = rawFieldsOptions.length > 0;
   }
 
-  btnConvert.disabled = !(hasInput && hasOutput && hasFields);
+  btnConvert.disabled = loadingDepth > 0 || !(hasInput && hasOutput && hasFields);
 }
 
 /**
  * 设置按钮的 loading 状态
  */
 function setLoading(loading, text = t("converting")) {
+  loadingDepth = Math.max(0, loadingDepth + (loading ? 1 : -1));
+  const busy = loadingDepth > 0;
   const btnText = btnConvert.querySelector(".btn-text");
   const btnLoading = btnConvert.querySelector(".btn-loading");
-
-  if (loading) {
-    btnText.style.display = "none";
-    btnLoading.innerHTML = `
-      <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-      </svg>
-      ${text}
-    `;
-    btnLoading.style.display = "flex";
-    btnConvert.disabled = true;
-  } else {
-    btnText.style.display = "inline";
-    btnLoading.style.display = "none";
-    updateConvertButton();
-  }
+  btnText.style.display = busy ? "none" : "inline";
+  btnLoading.style.display = busy ? "flex" : "none";
+  btnLoading.querySelector("span").textContent = text;
+  // Freeze inputs and actions while a request, parse, confirmation, or export is pending.
+  document.querySelectorAll("input, textarea, button").forEach(el => { el.disabled = busy; });
+  updateConvertButton();
 }
 
 /**
@@ -586,15 +598,14 @@ window.addEventListener("DOMContentLoaded", () => {
   inputPathEl.addEventListener("dblclick", selectInputFile);
 
   // 优化：输入变化时更新按钮状态和处理手动输入
-  let inputDebounceTimer;
   inputPathEl.addEventListener("input", () => {
-    updateConvertButton();
+    invalidateParsedInput();
 
     // 如果是手动输入且看起来像个路径，尝试自动解析
     clearTimeout(inputDebounceTimer);
     inputDebounceTimer = setTimeout(() => {
       const val = inputPathEl.value.trim();
-      if (val && (val.toLowerCase().endsWith(".json") || val.includes("/") || val.includes("\\"))) {
+      if (activeTab === "file" && val && (val.toLowerCase().endsWith(".json") || val.includes("/") || val.includes("\\"))) {
         loadFieldsFromFile(val);
       }
     }, 500);
@@ -622,6 +633,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Curl 执行按钮
   document.querySelector("#btn-exec-curl").addEventListener("click", executeCurl);
+
+  // Any edit invalidates the previous parse, so a later click cannot export stale data.
+  jsonInputEl.addEventListener("input", invalidateParsedInput);
+  curlInputEl.addEventListener("input", invalidateParsedInput);
 
   // JSON 解析按钮
   document.querySelector("#btn-parse-json").addEventListener("click", parseJsonInput);

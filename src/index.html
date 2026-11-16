@@ -21,7 +21,7 @@
   </div>
 
   <main class="container">
-    <div class="card" style="position:relative;">
+    <div class="card">
       <!-- 按钮容器: 主题与多语言 -->
       <div class="top-controls">
         <button type="button" id="btn-lang" class="control-btn" data-tooltip="切换语言 / Switch Language">
@@ -142,7 +142,7 @@
       </div>
 
       <!-- 原生字段选择面板 -->
-      <div id="field-selector" class="field-selector" style="display:none;">
+      <div id="field-selector" class="field-selector">
         <p class="field-selector-title"><span data-i18n="fieldSelectTitle">📋 发现多个数组结构，请选择要导出为 Sheet 的字段：</span></p>
         <div id="field-list" class="field-list"></div>
       </div>
@@ -157,7 +157,7 @@
 
       <button type="button" id="btn-convert" class="btn-primary" disabled>
         <span class="btn-text" data-i18n="startConvert">开始转换</span>
-        <span class="btn-loading" style="display:none;">
+        <span class="btn-loading">
           <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2">
             <path
@@ -167,8 +167,8 @@
         </span>
       </button>
 
-      <div id="status-msg" class="status-msg" style="display:none;"></div>
-      <button type="button" id="btn-reveal" class="btn-secondary" style="display:none; margin-top: 12px; width: 100%;"
+      <div id="status-msg" class="status-msg"></div>
+      <button type="button" id="btn-reveal" class="btn-secondary"
         data-i18n="revealInExplorer">在文件夹中显示</button>
     </div>
   </main>

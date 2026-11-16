@@ -1,9 +1,11 @@
 {
     "name": "json2excel-gui",
-    "version": "0.1.0",
+    "version": "1.0.1",
     "private": true,
     "scripts": {
-        "tauri": "tauri"
+        "tauri": "tauri",
+        "test": "node --test tests/*.test.cjs",
+        "check": "node --check src/main.js && npm test"
     },
     "devDependencies": {
         "@tauri-apps/cli": "^2.1.0"
