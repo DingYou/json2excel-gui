@@ -40,8 +40,9 @@ const i18nData = {
     errOpenViewer: "❌ 无法打开文件管理器",
     items: "项",
     matrix: "矩阵",
-    langToggleTooltip: "Switch to English",
-    langText: "EN",
+    langToggleTooltip: "切换到英文",
+    langButtonAria: "当前语言：中文，切换到英文",
+    langText: "中文",
     fileFilters: "JSON 文件",
     excelFilters: "Excel 文件",
     selJsonTitle: "选择 JSON 文件",
@@ -79,8 +80,9 @@ const i18nData = {
     errOpenViewer: "❌ Cannot open file manager",
     items: "items",
     matrix: "matrix",
-    langToggleTooltip: "切换到中文",
-    langText: "中文",
+    langToggleTooltip: "Switch to Chinese",
+    langButtonAria: "Current language: English. Switch to Chinese",
+    langText: "EN",
     fileFilters: "JSON Files",
     excelFilters: "Excel Files",
     selJsonTitle: "Select JSON File",
@@ -94,6 +96,7 @@ function t(key) {
 }
 
 function updateDOMTranslations() {
+  document.documentElement.setAttribute("lang", currentLang === "zh" ? "zh-CN" : "en");
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     if (i18nData[currentLang][key]) {
@@ -110,6 +113,7 @@ function updateDOMTranslations() {
   const btnLang = document.querySelector("#btn-lang");
   if (btnLang) {
     btnLang.setAttribute("data-tooltip", t("langToggleTooltip"));
+    btnLang.setAttribute("aria-label", t("langButtonAria"));
     btnLang.querySelector(".lang-text").textContent = t("langText");
   }
 
@@ -120,10 +124,11 @@ function updateDOMTranslations() {
     btnTheme.setAttribute("data-tooltip", labelMapping[currentMode] || t("themeAuto"));
   }
 
-  // Update field selector if active
-  if (rawFieldsOptions.length > 0) {
-    showFieldSelector(rawFieldsOptions);
-  }
+  // Translate existing metadata in place, keeping checkbox focus and selection intact.
+  document.querySelectorAll("#field-list .field-meta").forEach((el, index) => {
+    const field = rawFieldsOptions[index];
+    if (field) el.textContent = fieldMetaText(field);
+  });
 
   updateConvertButton();
 }
@@ -422,6 +427,10 @@ function hideFieldSelector() {
   if (panel) panel.style.display = "none";
 }
 
+function fieldMetaText(field) {
+  return `(${field.count} ${t("items")}${field.is_matrix ? ', ' + t("matrix") : ''})`;
+}
+
 /**
  * 显示字段选择面板供用户勾选导出的字段
  */
@@ -442,7 +451,7 @@ function showFieldSelector(fields) {
     for (const [className, text] of [
       ["field-num", `[${index + 1}]`],
       ["field-name", field.path],
-      ["field-meta", `(${field.count} ${t("items")}${field.is_matrix ? ', ' + t("matrix") : ''})`],
+      ["field-meta", fieldMetaText(field)],
     ]) {
       const span = document.createElement("span");
       span.className = className;
